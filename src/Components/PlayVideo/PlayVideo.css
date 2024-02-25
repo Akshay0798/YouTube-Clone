@@ -39,15 +39,17 @@
     display: flex;
     align-items: center;
     margin-top: 20px;
+   
 }
 .publisher div{
     flex: 1;
-    line-height: 18px;
+    line-height: 18px; 
+    
 }
 .publisher img{
     width: 40px;
     border-radius: 50%;
-    margin-right: 50px;
+    margin-right: 15px;
 }
 .publisher div p{
     color: #000;

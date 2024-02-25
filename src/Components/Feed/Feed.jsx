@@ -28,14 +28,14 @@ const Feed = ({ category }) => {
   
   useEffect(() => {
     fetchData();
-  });
+  },[category]);
 
   return (
     <div className="feed">
       {data.map((items,index) => {
         return (
           <Link
-            key={index.id}
+            key={items.id}
             to={`video/${items.snippet.categoryId}/${items.id}`}
             className="card"
           >

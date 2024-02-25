@@ -11,27 +11,41 @@ import moment from "moment";
 
 const PlayVideo = ({ videoId }) => {
   const [apiData, setApiData] = useState(null);
+  const [channelData, setChannelData] = useState(null);
+  const [commentData, setCommentData] = useState([]);
 
+  //? fetching video data
   const fetchVideoData = async () => {
     const videoDetails_url = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&id=${videoId}&key=${API_KEY}`;
+    await fetch(videoDetails_url)
+      .then((res) => res.json())
+      .then((data) => setApiData(data.items[0]));
+  };
 
-    try {
-      const response = await fetch(videoDetails_url);
-      const responseData = await response.json();
-      setApiData(responseData.items[0]);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
+  const fetchOtherData = async () => {
+    //? fetching channel data
+    const channelData_url = `https://youtube.googleapis.com/youtube/v3/channels?part=snippet%2CcontentDetails%2Cstatistics&id=${apiData.snippet.channelId}&key=${API_KEY}`;
+    await fetch(channelData_url)
+      .then((res) => res.json())
+      .then((data) => setChannelData(data.items[0]));
+
+    //? fetching comments data
+    const comment_url = `https://youtube.googleapis.com/youtube/v3/commentThreads?part=snippet%2Creplies&videoId=${videoId}&key=${API_KEY}`;
+    await fetch(comment_url)
+      .then((res) => res.json())
+      .then((data) => setCommentData(data.items[0]));
   };
 
   useEffect(() => {
     fetchVideoData();
-  },[]);
+  }, []);
 
-  // Check if apiData is still loading
-  if (!apiData) {
-    return <div>Loading...</div>;
-  }
+  useEffect(() => {
+    fetchOtherData();
+  }, [apiData]);
+
+  
+  
 
   return (
     <div className="play-video">
@@ -47,15 +61,15 @@ const PlayVideo = ({ videoId }) => {
       <div className="play-video-info">
         <p>
           {apiData ? valueConverter(apiData.statistics.viewCount) : "15K"} Views
-          &bull; {moment(apiData.snippet.publishedAt).fromNow()}{" "}
+          &bull; {apiData ? moment(apiData.snippet.publishedAt).fromNow() : ""}
         </p>
         <div>
           <span>
             <img src={like} alt="" />
-            125
+            {apiData ? valueConverter(apiData.statistics.likeCount) : 155}
           </span>
           <span>
-            <img src={dislike} alt="" />1
+            <img src={dislike} alt="" />
           </span>
           <span>
             <img src={share} alt="" />
@@ -68,109 +82,54 @@ const PlayVideo = ({ videoId }) => {
         </div>
       </div>
       <hr />
+
+      {/* Publisher Section */}
       <div className="publisher">
-        <img src={jack} alt="" />
+        <img
+          src={channelData ? channelData.snippet.thumbnails.default.url : ""}
+          alt=""
+        />
         <div>
-          <p>GreatStack</p>
-          <span>999k Subscribed</span>
+          <p>{apiData ? apiData.snippet.channelTitle : ""}</p>
+          <span>
+            {channelData
+              ? valueConverter(channelData.statistics.subscriberCount)
+              : "1M"}{" "}
+            Subscribers
+          </span>
         </div>
         <button>Subscribe</button>
       </div>
+
       <div className="vid-description">
-        <p>Channel that makes learning easy</p>
-        <p>Subscribe GreatStack to watch more tutorials on web development</p>
+        <p>
+          {apiData
+            ? apiData.snippet.description.slice(0, 250)
+            : "Description Here"}
+        </p>
         <hr />
-        <h4>140 Comments</h4>
-        <div className="comments">
-          <img src={user_profile} alt="" />
-          <div>
-            <h3>
-              Jack Nicolsons <span>1 day ago</span>
-            </h3>
-            <p>
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut odio
-              animi, deleniti voluptatibus officia omnis impedit ex harum cumque
-              saepe.
-            </p>
-            <div className="comment-action">
-              <img src={like} alt="" />
-              <span>244</span>
-              <img src={dislike} alt="" />
+        
+        <h4>
+          {apiData ? valueConverter(apiData.statistics.commentCount) : 103}
+          Comments
+        </h4>
+
+        {commentData.map((items, index) => {
+          return (
+            <div key={index} className="comments">
+              <img src={items.snippet.topLevelComment.snippet.authorProfileImageUrl} alt="" />
+              <div>
+                <h3>{items.snippet.topLevelComment.snippet.authorDisplayName} <span>1 day ago</span></h3>
+                <p>{items.snippet.topLevelComment.snippet.textDisplay}</p>
+                <div className="comment-action">
+                  <img src={like} alt="" />
+                  <span>{valueConverter(items.snippet.topLevelComment.snippet.likeCount)}</span>
+                  <img src={dislike} alt="" />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div className="vid-description">
-        <p>Channel that makes learning easy</p>
-        <p>Subscribe GreatStack to watch more tutorials on web development</p>
-        <hr />
-        <h4>140 Comments</h4>
-        <div className="comments">
-          <img src={user_profile} alt="" />
-          <div>
-            <h3>
-              Jack Nicolsons <span>1 day ago</span>
-            </h3>
-            <p>
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut odio
-              animi, deleniti voluptatibus officia omnis impedit ex harum cumque
-              saepe.
-            </p>
-            <div className="comment-action">
-              <img src={like} alt="" />
-              <span>244</span>
-              <img src={dislike} alt="" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="vid-description">
-        <p>Channel that makes learning easy</p>
-        <p>Subscribe GreatStack to watch more tutorials on web development</p>
-        <hr />
-        <h4>140 Comments</h4>
-        <div className="comments">
-          <img src={user_profile} alt="" />
-          <div>
-            <h3>
-              Jack Nicolsons <span>1 day ago</span>
-            </h3>
-            <p>
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut odio
-              animi, deleniti voluptatibus officia omnis impedit ex harum cumque
-              saepe.
-            </p>
-            <div className="comment-action">
-              <img src={like} alt="" />
-              <span>244</span>
-              <img src={dislike} alt="" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="vid-description">
-        <p>Channel that makes learning easy</p>
-        <p>Subscribe GreatStack to watch more tutorials on web development</p>
-        <hr />
-        <h4>140 Comments</h4>
-        <div className="comments">
-          <img src={user_profile} alt="" />
-          <div>
-            <h3>
-              Jack Nicolsons <span>1 day ago</span>
-            </h3>
-            <p>
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Ut odio
-              animi, deleniti voluptatibus officia omnis impedit ex harum cumque
-              saepe.
-            </p>
-            <div className="comment-action">
-              <img src={like} alt="" />
-              <span>244</span>
-              <img src={dislike} alt="" />
-            </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );
