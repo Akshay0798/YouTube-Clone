@@ -4,12 +4,16 @@ import like from "../../assets/like.png";
 import dislike from "../../assets/dislike.png";
 import share from "../../assets/share.png";
 import save from "../../assets/save.png";
-import jack from "../../assets/jack.png";
-import user_profile from "../../assets/user_profile.jpg";
+// import jack from "../../assets/jack.png";
+// import user_profile from "../../assets/user_profile.jpg";
 import { API_KEY, valueConverter } from "../../data";
 import moment from "moment";
+import { useParams } from "react-router-dom";
 
-const PlayVideo = ({ videoId }) => {
+const PlayVideo = () => {
+
+  const { videoId } = useParams();
+
   const [apiData, setApiData] = useState(null);
   const [channelData, setChannelData] = useState(null);
   const [commentData, setCommentData] = useState([]);
@@ -18,34 +22,37 @@ const PlayVideo = ({ videoId }) => {
   const fetchVideoData = async () => {
     const videoDetails_url = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&id=${videoId}&key=${API_KEY}`;
     await fetch(videoDetails_url)
-      .then((res) => res.json())
-      .then((data) => setApiData(data.items[0]));
+      .then(res => res.json())
+      .then(data => setApiData(data.items[0]));
   };
+
+  
 
   const fetchOtherData = async () => {
-    //? fetching channel data
-    const channelData_url = `https://youtube.googleapis.com/youtube/v3/channels?part=snippet%2CcontentDetails%2Cstatistics&id=${apiData.snippet.channelId}&key=${API_KEY}`;
-    await fetch(channelData_url)
-      .then((res) => res.json())
-      .then((data) => setChannelData(data.items[0]));
+    if (apiData && apiData.snippet) {
+      //? fetching channel data
+      const channelData_url = `https://youtube.googleapis.com/youtube/v3/channels?part=snippet%2CcontentDetails%2Cstatistics&id=${apiData.snippet.channelId}&key=${API_KEY}`;
+      await fetch(channelData_url)
+        .then(res => res.json())
+        .then(data => setChannelData(data.items[0]));
+  
+      //? fetching comments data
+      const comment_url = `https://youtube.googleapis.com/youtube/v3/commentThreads?part=snippet%2Creplies&maxResults=50&videoId=${videoId}&key=${API_KEY}`;
+      await fetch(comment_url)
+        .then(res=>res.json())
+        .then(data=> setCommentData(data.items))
 
-    //? fetching comments data
-    const comment_url = `https://youtube.googleapis.com/youtube/v3/commentThreads?part=snippet%2Creplies&videoId=${videoId}&key=${API_KEY}`;
-    await fetch(comment_url)
-      .then((res) => res.json())
-      .then((data) => setCommentData(data.items[0]));
+    }
   };
+  
 
   useEffect(() => {
     fetchVideoData();
-  }, []);
+  }, [videoId]);
 
   useEffect(() => {
     fetchOtherData();
-  }, [apiData]);
-
-  
-  
+  },[apiData]);
 
   return (
     <div className="play-video">
@@ -85,16 +92,11 @@ const PlayVideo = ({ videoId }) => {
 
       {/* Publisher Section */}
       <div className="publisher">
-        <img
-          src={channelData ? channelData.snippet.thumbnails.default.url : ""}
-          alt=""
-        />
+        <img src={channelData ? channelData.snippet.thumbnails.default.url : ""}/>
         <div>
           <p>{apiData ? apiData.snippet.channelTitle : ""}</p>
           <span>
-            {channelData
-              ? valueConverter(channelData.statistics.subscriberCount)
-              : "1M"}{" "}
+            {channelData? valueConverter(channelData.statistics.subscriberCount):"1M"}
             Subscribers
           </span>
         </div>
@@ -102,28 +104,24 @@ const PlayVideo = ({ videoId }) => {
       </div>
 
       <div className="vid-description">
-        <p>
-          {apiData
-            ? apiData.snippet.description.slice(0, 250)
-            : "Description Here"}
-        </p>
+        <p>{apiData? apiData.snippet.description.slice(0, 350):"Description Here"}</p>
         <hr />
-        
         <h4>
-          {apiData ? valueConverter(apiData.statistics.commentCount) : 103}
+          {apiData ? valueConverter(apiData.statistics.commentCount) : 100}
           Comments
         </h4>
 
-        {commentData.map((items, index) => {
+        {/* Array.isArray(commentData) &&  */}
+        {commentData.map((item, index) => {
           return (
             <div key={index} className="comments">
-              <img src={items.snippet.topLevelComment.snippet.authorProfileImageUrl} alt="" />
+              <img src={item.snippet.topLevelComment.snippet.authorProfileImageUrl} alt="" />
               <div>
-                <h3>{items.snippet.topLevelComment.snippet.authorDisplayName} <span>1 day ago</span></h3>
-                <p>{items.snippet.topLevelComment.snippet.textDisplay}</p>
+                <h3>{item.snippet.topLevelComment.snippet.authorDisplayName} <span>1 day ago</span></h3>
+                <p>{item.snippet.topLevelComment.snippet.textDisplay}</p>
                 <div className="comment-action">
                   <img src={like} alt="" />
-                  <span>{valueConverter(items.snippet.topLevelComment.snippet.likeCount)}</span>
+                  <span>{valueConverter(item.snippet.topLevelComment.snippet.likeCount)}</span>
                   <img src={dislike} alt="" />
                 </div>
               </div>
